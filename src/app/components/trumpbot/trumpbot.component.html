@@ -1,0 +1,81 @@
+<div class="trumpbot-container">
+  <div class="trumpbot-header">
+    <h1>🇺🇸 TrumpBot</h1>
+    <p class="subtitle">Powered by Amazon Bedrock with LoRA Customization</p>
+    <button class="clear-btn" (click)="clearChat()" [disabled]="messages().length === 0">
+      Clear Chat
+    </button>
+  </div>
+
+  <div class="messages-container" #messagesContainer>
+    @if (messages().length === 0) {
+      <div class="welcome-message">
+        <h2>Welcome to TrumpBot!</h2>
+        <p>Start a conversation with the 45th President of the United States.</p>
+        <p class="hint">💡 Tip: Ask about politics, business, or just have a casual chat!</p>
+      </div>
+    }
+
+    @for (message of messages(); track $index) {
+      <div class="message" [class.user-message]="message.role === 'user'" 
+           [class.assistant-message]="message.role === 'assistant'">
+        <div class="message-avatar">
+          @if (message.role === 'user') {
+            <span class="avatar-icon">👤</span>
+          } @else {
+            <span class="avatar-icon">🇺🇸</span>
+          }
+        </div>
+        <div class="message-content">
+          <div class="message-text">{{ message.content }}</div>
+          <div class="message-time">
+            {{ message.timestamp | date:'short' }}
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isStreaming()) {
+      <div class="message assistant-message">
+        <div class="message-avatar">
+          <span class="avatar-icon">🇺🇸</span>
+        </div>
+        <div class="message-content">
+          <div class="message-text">
+            {{ currentStreamingMessage() }}
+            <span class="typing-indicator">▊</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="input-container">
+    <div class="input-wrapper">
+      <textarea
+        [(ngModel)]="userInput"
+        (keydown)="onKeyPress($event)"
+        placeholder="Type your message here... (Press Enter to send)"
+        [disabled]="isStreaming()"
+        class="message-input"
+        rows="1"
+      ></textarea>
+      <button
+        (click)="sendMessage()"
+        [disabled]="!userInput().trim() || isStreaming()"
+        class="send-button"
+      >
+        @if (isStreaming()) {
+          <span class="spinner"></span>
+        } @else {
+          <span>Send</span>
+        }
+      </button>
+    </div>
+    @if (bedrockService.isLoading() === false && bedrockService.error()) {
+      <div class="error-message">
+        ⚠️ {{ bedrockService.error() }}
+      </div>
+    }
+  </div>
+</div>
